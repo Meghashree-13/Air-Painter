@@ -17,3 +17,6 @@ Press these number keys on your keyboard to switch powers:
 - **2**: **Lightning** (Summons lightning bolts)
 - **3**: **Red & Blue** (Left hand Red, Right hand Blue)
   - _Note: You cannot paint with this power._
+
+
+PS - this whole thing is vibecoded. 
