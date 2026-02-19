@@ -19,4 +19,4 @@ Press these number keys on your keyboard to switch powers:
   - _Note: You cannot paint with this power._
 
 
-PS - this whole thing is vibecoded. 
+PS - this whole thing is vibecoded. And i had to drop the glow cause it will lag like crazy.
