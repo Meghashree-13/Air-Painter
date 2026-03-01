@@ -1,28 +1,29 @@
 # Air Painter | Interactive Canvas
 
-An interactive web application that allows you to draw in the air using hand gestures, powered by AI.
+A browser-based interactive application that allows you to draw on a digital canvas using hand gestures, captured via your webcam.
 
 
 
 ## 🚀 Overview
 
-Air Painter uses your webcam and **MediaPipe Hand Landmarker** to track your finger movements in real-time. By raising your index finger, you can draw on a virtual canvas directly in front of you.
+Air Painter uses **MediaPipe Hands** to detect hand landmarks in real-time. By tracking the position of your index finger, it maps gestures to a digital drawing canvas, allowing for a touchless painting experience directly in your browser.
 
 ## 🛠️ Features
 
-* **Real-time Hand Tracking:** Uses advanced AI to detect your hand and fingers.
-* **Gestural Drawing:** Raise your index finger to draw; make a fist or lower your finger to stop.
-* **Customizable Brush:** Adjust the stroke thickness via the UI.
-* **Color Palette:** Choose from 5 vibrant colors to create your artwork.
-* **Undo/Redo & Clear:** Full control over your drawing history.
-* **Low Latency:** Optimized for smooth, responsive drawing.
+* **Touchless Drawing:** Draw in the air using your index finger.
+* **Pause Control:** Lower your finger or make a fist to stop drawing.
+* **Color Palette:** Choose from 5 vibrant neon colors.
+* **Adjustable Brush:** Change the brush size dynamically.
+* **Canvas History:** Undo and Redo your strokes (`MAX_HISTORY = 20`).
+* **Clear Canvas:** Wipe the canvas clean instantly.
+* **Save Screenshot:** Download your masterpiece as a PNG image directly to your device.
 
 ## ⚙️ How It Works
 
-1.  **Camera Input:** The app captures video from your webcam via the browser.
-2.  **AI Processing:** MediaPipe detects hand landmarks (key points on your hand).
-3.  **Gesture Detection:** The app checks if your index finger is raised (`indexTip.y < indexPip.y`) compared to other fingers.
-4.  **Canvas Drawing:** If you are "pointing," the app draws lines based on the movement of your fingertip.
+1.  **Detection:** The webcam feed is processed using MediaPipe to identify hand landmarks (`8` for index finger tip).
+2.  **Smoothing:** Exponential Moving Average (EMA) is applied to the coordinates to prevent shaky lines.
+3.  **Rendering:** The drawing canvas renders lines based on the smoothed coordinates when the "pointing" gesture is detected.
+4.  **Export:** The canvas context is converted to a PNG data URL for saving.
 
 
 
@@ -30,34 +31,22 @@ Air Painter uses your webcam and **MediaPipe Hand Landmarker** to track your fin
 
 | Component | Technology |
 | :--- | :--- |
-| **Frontend** | HTML5, Tailwind CSS |
-| **AI/ML** | Google MediaPipe Hands |
-| **Scripting** | Vanilla JavaScript |
+| **Framework** | Vanilla JS, HTML5, CSS |
+| **Styling** | Tailwind CSS |
+| **AI/ML** | MediaPipe Hands |
 | **Icons** | Lucide Icons |
 
 ## 🖥️ Setup & Installation
 
-This is a client-side web application. You do not need to install a backend.
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/your-username/air-painter.git](https://github.com/your-username/air-painter.git)
+    ```
 
-1.  Clone this repository or download the `index.html` file.
-2.  Open `index.html` in a modern web browser (Chrome, Edge, Firefox, etc.).
-3.  **Allow Camera Access** when prompted by your browser.
+2.  **Run locally:**
+    Since this uses browser-based modules, you must serve it using a local server (e.g., Live Server extension in VS Code). **It will not work by just double-clicking the HTML file.**
 
-## 🕹️ User Instructions
-
-| Action | Gesture |
-| :--- | :--- |
-| **Draw** | Raise your Index Finger. |
-| **Stop Drawing** | Make a Fist or lower your hand. |
-| **Change Color** | Click on the colored circles in the top menu. |
-| **Change Size** | Use the slider next to the brush icon. |
-| **Undo/Redo** | Click the arrow buttons in the top menu. |
-| **Clear Canvas** | Click the trash icon. |
-
-## 📋 Permissions & Privacy
-
-* **Camera:** This app requires webcam access to function. **No video data is sent to a server**; all processing happens locally in your browser.
-* **Cookies:** This app does not use cookies.
+3.  **Permissions:** Allow webcam access when prompted by your browser.
 
 ## 🛡️ License
 
