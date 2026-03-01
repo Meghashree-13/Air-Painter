@@ -108,6 +108,9 @@
                     <button id="clear_btn" class="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/80 hover:text-white group" title="Clear Canvas">
                         <i data-lucide="trash-2" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
                     </button>
+                    <button id="screenshot_btn" class="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/80 hover:text-white group" title="Save Screenshot">
+                        <i data-lucide="camera" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                    </button>
                 </div>
                 <div class="w-px h-8 bg-white/10"></div>
                 
@@ -156,7 +159,7 @@
             <i data-lucide="palette" class="absolute inset-0 m-auto w-10 h-10 text-cyan-500 animate-pulse"></i>
         </div>
         <h2 class="text-3xl font-black tracking-tighter uppercase italic text-white mb-3">
-            Initializing 
+            Initializing
         </h2>
         <p class="text-white/40 text-[10px] uppercase tracking-[0.5em] font-bold animate-pulse-soft mono">
             Loading Hand Tracking Models...
@@ -172,11 +175,8 @@
             Camera Required
         </h2>
         <p id="error_msg" class="text-white/60 max-w-md mb-10 leading-relaxed text-sm">
-            We need camera access to track your hand gestures. Please enable permissions and refresh.
+            We need camera access to track your hand gestures. Please enable permissions and refresh your browser.
         </p>
-        <button onclick="window.location.reload()" class="px-10 py-4 bg-white text-black font-black rounded-2xl hover:bg-cyan-400 transition-all active:scale-95 uppercase tracking-[0.2em] text-xs">
-            Refresh & Retry
-        </button>
     </div>
 
     <script>
@@ -198,6 +198,7 @@
         const infoBtn = document.getElementById('info_btn');
         const undoBtn = document.getElementById('undo_btn');
         const redoBtn = document.getElementById('redo_btn');
+        const screenshotBtn = document.getElementById('screenshot_btn');
         const brushSizeInput = document.getElementById('brush_size');
         const brushSizeVal = document.getElementById('brush_size_val');
         
@@ -278,6 +279,30 @@
         document.getElementById('clear_btn').addEventListener('click', () => {
             saveState();
             drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        });
+
+        // Screenshot Logic
+        screenshotBtn.addEventListener('click', () => {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = bgCanvas.width;
+            tempCanvas.height = bgCanvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // Draw background (video) first
+            tempCtx.drawImage(bgCanvas, 0, 0);
+            // Draw drawing on top
+            tempCtx.drawImage(drawingCanvas, 0, 0);
+
+            // Create download link
+            const link = document.createElement('a');
+            const date = new Date().toISOString().replace(/[:.]/g, '-');
+            link.download = `air-painter-${date}.png`;
+            link.href = tempCanvas.toDataURL('image/png');
+            link.click();
+            
+            // Visual feedback
+            screenshotBtn.classList.add('text-cyan-400');
+            setTimeout(() => screenshotBtn.classList.remove('text-cyan-400'), 500);
         });
 
         // Toggle Instructions
@@ -426,7 +451,10 @@
         async function init() {
             try {
                 // Check for camera permission explicitly
-                await navigator.mediaDevices.getUserMedia({ video: true });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                // Stop the stream immediately as we just wanted to check permission
+                // and the MediaPipe Camera utility will manage its own stream.
+                stream.getTracks().forEach(track => track.stop());
                 
                 const camera = new Camera(videoElement, {
                     onFrame: async () => {
@@ -440,8 +468,15 @@
                 console.error('Camera Error:', err);
                 loadingOverlay.style.display = 'none';
                 errorOverlay.classList.remove('hidden');
-                if (err.name === 'NotAllowedError') {
-                    errorMsg.innerText = "Camera access was denied. Please enable permissions in your browser settings and refresh the page.";
+                
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    errorMsg.innerHTML = "Camera access was <b>denied</b>. <br><br>Please click the <b>camera icon</b> in your browser's address bar to allow access, then <b>refresh your browser</b>.";
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    errorMsg.innerText = "No camera was found on your device. Please connect a camera and try again.";
+                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                    errorMsg.innerText = "Your camera is already in use by another application. Please close other apps using the camera and try again.";
+                } else {
+                    errorMsg.innerText = "An unexpected error occurred while accessing the camera: " + err.message;
                 }
             }
         }
