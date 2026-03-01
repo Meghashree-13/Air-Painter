@@ -78,23 +78,48 @@
             </div>
 
             <!-- Controls -->
-            <div class="flex items-center gap-4 bg-black/40 backdrop-blur-2xl p-2 rounded-2xl border border-white/10 shadow-2xl">
+            <div class="flex flex-col md:flex-row items-center gap-4 bg-black/40 backdrop-blur-2xl p-3 rounded-3xl border border-white/10 shadow-2xl pointer-events-auto">
+                <!-- Brush Size -->
+                <div class="flex items-center gap-3 px-2">
+                    <i data-lucide="brush" class="w-4 h-4 text-white/50"></i>
+                    <input type="range" id="brush_size" min="2" max="50" value="10" class="w-24 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-cyan-500">
+                    <span id="brush_size_val" class="text-[10px] mono w-4 text-white/50">10</span>
+                </div>
+                <div class="hidden md:block w-px h-8 bg-white/10"></div>
+                
+                <!-- Colors -->
                 <div id="color_picker" class="flex gap-2 px-2">
-                    <button data-color="#00ffff" class="w-10 h-10 rounded-full border-2 border-transparent transition-all duration-300 hover:scale-110 bg-[#00ffff] btn-active"></button>
-                    <button data-color="#3b82f6" class="w-10 h-10 rounded-full border-2 border-transparent transition-all duration-300 hover:scale-110 bg-[#3b82f6]"></button>
-                    <button data-color="#22c55e" class="w-10 h-10 rounded-full border-2 border-transparent transition-all duration-300 hover:scale-110 bg-[#22c55e]"></button>
-                    <button data-color="#ef4444" class="w-10 h-10 rounded-full border-2 border-transparent transition-all duration-300 hover:scale-110 bg-[#ef4444]"></button>
-                    <button data-color="#eab308" class="w-10 h-10 rounded-full border-2 border-transparent transition-all duration-300 hover:scale-110 bg-[#eab308]"></button>
+                    <button data-color="#00ffff" class="w-8 h-8 rounded-full border-2 border-transparent transition-all duration-300 hover:scale-110 bg-[#00ffff] btn-active"></button>
+                    <button data-color="#3b82f6" class="w-8 h-8 rounded-full border-2 border-transparent transition-all duration-300 hover:scale-110 bg-[#3b82f6]"></button>
+                    <button data-color="#22c55e" class="w-8 h-8 rounded-full border-2 border-transparent transition-all duration-300 hover:scale-110 bg-[#22c55e]"></button>
+                    <button data-color="#ef4444" class="w-8 h-8 rounded-full border-2 border-transparent transition-all duration-300 hover:scale-110 bg-[#ef4444]"></button>
+                    <button data-color="#eab308" class="w-8 h-8 rounded-full border-2 border-transparent transition-all duration-300 hover:scale-110 bg-[#eab308]"></button>
                 </div>
                 <div class="w-px h-8 bg-white/10"></div>
-                <button id="clear_btn" class="p-3 hover:bg-white/10 rounded-xl transition-colors text-white/80 hover:text-white group" title="Clear Canvas">
-                    <i data-lucide="trash-2" class="w-6 h-6 group-hover:rotate-12 transition-transform"></i>
+                
+                <!-- History & Clear -->
+                <div class="flex items-center gap-1">
+                    <button id="undo_btn" class="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/80 hover:text-white disabled:opacity-20" title="Undo">
+                        <i data-lucide="undo-2" class="w-5 h-5"></i>
+                    </button>
+                    <button id="redo_btn" class="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/80 hover:text-white disabled:opacity-20" title="Redo">
+                        <i data-lucide="redo-2" class="w-5 h-5"></i>
+                    </button>
+                    <button id="clear_btn" class="p-2 hover:bg-white/10 rounded-xl transition-colors text-white/80 hover:text-white group" title="Clear Canvas">
+                        <i data-lucide="trash-2" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
+                    </button>
+                </div>
+                <div class="w-px h-8 bg-white/10"></div>
+                
+                <!-- Info Toggle -->
+                <button id="info_btn" class="p-2 hover:bg-white/10 rounded-xl transition-colors text-cyan-400" title="Instructions">
+                    <i data-lucide="help-circle" class="w-6 h-6"></i>
                 </button>
             </div>
         </div>
 
         <!-- Instructions -->
-        <div id="instructions_panel" class="mt-auto pointer-events-auto transition-all duration-500 transform translate-y-0 opacity-100">
+        <div id="instructions_panel" class="mt-auto pointer-events-auto transition-all duration-500 transform translate-y-10 opacity-0 pointer-events-none">
             <div class="max-w-md bg-black/60 backdrop-blur-3xl border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
                 <div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
                     <i data-lucide="info" class="w-16 h-16"></i>
@@ -131,7 +156,7 @@
             <i data-lucide="palette" class="absolute inset-0 m-auto w-10 h-10 text-cyan-500 animate-pulse"></i>
         </div>
         <h2 class="text-3xl font-black tracking-tighter uppercase italic text-white mb-3">
-            Initializing AI
+            Initializing 
         </h2>
         <p class="text-white/40 text-[10px] uppercase tracking-[0.5em] font-bold animate-pulse-soft mono">
             Loading Hand Tracking Models...
@@ -170,11 +195,75 @@
         const errorOverlay = document.getElementById('error_overlay');
         const errorMsg = document.getElementById('error_msg');
         const instructionsPanel = document.getElementById('instructions_panel');
+        const infoBtn = document.getElementById('info_btn');
+        const undoBtn = document.getElementById('undo_btn');
+        const redoBtn = document.getElementById('redo_btn');
+        const brushSizeInput = document.getElementById('brush_size');
+        const brushSizeVal = document.getElementById('brush_size_val');
         
         let currentColor = '#00ffff';
+        let brushSize = 10;
         let isDrawing = false;
         let lastPoint = null;
         let handsLoaded = false;
+        
+        // Smoothing state
+        let smoothedX = 0;
+        let smoothedY = 0;
+        const smoothingAlpha = 0.3; // Lower = smoother but more lag
+
+        // History state
+        let undoStack = [];
+        let redoStack = [];
+        const MAX_HISTORY = 20;
+
+        function saveState() {
+            undoStack.push(drawingCanvas.toDataURL());
+            if (undoStack.length > MAX_HISTORY) undoStack.shift();
+            redoStack = []; // Clear redo stack on new action
+            updateHistoryButtons();
+        }
+
+        function undo() {
+            if (undoStack.length === 0) return;
+            redoStack.push(drawingCanvas.toDataURL());
+            const state = undoStack.pop();
+            restoreState(state);
+            updateHistoryButtons();
+        }
+
+        function redo() {
+            if (redoStack.length === 0) return;
+            undoStack.push(drawingCanvas.toDataURL());
+            const state = redoStack.pop();
+            restoreState(state);
+            updateHistoryButtons();
+        }
+
+        function restoreState(dataUrl) {
+            const img = new Image();
+            img.onload = () => {
+                drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+                drawingCtx.drawImage(img, 0, 0);
+            };
+            img.src = dataUrl;
+        }
+
+        function updateHistoryButtons() {
+            undoBtn.disabled = undoStack.length === 0;
+            redoBtn.disabled = redoStack.length === 0;
+        }
+
+        // Brush Size Logic
+        brushSizeInput.addEventListener('input', (e) => {
+            brushSize = parseInt(e.target.value);
+            brushSizeVal.innerText = brushSize;
+        });
+
+        // History Buttons Logic
+        undoBtn.addEventListener('click', undo);
+        redoBtn.addEventListener('click', redo);
+        updateHistoryButtons();
 
         // Color Picker Logic
         document.querySelectorAll('#color_picker button').forEach(btn => {
@@ -187,13 +276,22 @@
 
         // Clear Canvas
         document.getElementById('clear_btn').addEventListener('click', () => {
+            saveState();
             drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
         });
 
-        // Close Instructions
-        document.getElementById('close_instructions').addEventListener('click', () => {
-            instructionsPanel.classList.add('translate-y-10', 'opacity-0', 'pointer-events-none');
-        });
+        // Toggle Instructions
+        function toggleInstructions() {
+            const isHidden = instructionsPanel.classList.contains('opacity-0');
+            if (isHidden) {
+                instructionsPanel.classList.remove('translate-y-10', 'opacity-0', 'pointer-events-none');
+            } else {
+                instructionsPanel.classList.add('translate-y-10', 'opacity-0', 'pointer-events-none');
+            }
+        }
+
+        infoBtn.addEventListener('click', toggleInstructions);
+        document.getElementById('close_instructions').addEventListener('click', toggleInstructions);
 
         // Resize Handling
         function resize() {
@@ -238,15 +336,27 @@
                 const indexPip = landmarks[6];
                 const middleTip = landmarks[12];
                 
-                const x = (1 - indexTip.x) * bgCanvas.width;
-                const y = indexTip.y * bgCanvas.height;
+                const rawX = (1 - indexTip.x) * bgCanvas.width;
+                const rawY = indexTip.y * bgCanvas.height;
+
+                // Apply Smoothing (EMA)
+                if (smoothedX === 0 && smoothedY === 0) {
+                    smoothedX = rawX;
+                    smoothedY = rawY;
+                } else {
+                    smoothedX = smoothingAlpha * rawX + (1 - smoothingAlpha) * smoothedX;
+                    smoothedY = smoothingAlpha * rawY + (1 - smoothingAlpha) * smoothedY;
+                }
+
+                const x = smoothedX;
+                const y = smoothedY;
 
                 // Gesture: Index finger pointing up, middle finger down
                 const isPointing = indexTip.y < indexPip.y && indexTip.y < middleTip.y;
 
                 // Visual feedback for cursor on background canvas
                 bgCtx.beginPath();
-                bgCtx.arc(x, y, 12, 0, Math.PI * 2);
+                bgCtx.arc(x, y, brushSize / 2 + 5, 0, Math.PI * 2);
                 bgCtx.fillStyle = isPointing ? currentColor : 'rgba(255,255,255,0.3)';
                 bgCtx.fill();
                 bgCtx.strokeStyle = 'white';
@@ -260,18 +370,19 @@
                     statusText.classList.replace('opacity-40', 'opacity-100');
 
                     if (!lastPoint) {
+                        saveState(); // Save state before starting a new stroke
                         lastPoint = { x, y };
                     } else {
                         drawingCtx.beginPath();
                         drawingCtx.moveTo(lastPoint.x, lastPoint.y);
                         drawingCtx.lineTo(x, y);
                         drawingCtx.strokeStyle = currentColor;
-                        drawingCtx.lineWidth = 10;
+                        drawingCtx.lineWidth = brushSize;
                         drawingCtx.lineCap = 'round';
                         drawingCtx.lineJoin = 'round';
                         
                         // Glow effect
-                        drawingCtx.shadowBlur = 20;
+                        drawingCtx.shadowBlur = brushSize * 1.5;
                         drawingCtx.shadowColor = currentColor;
                         
                         drawingCtx.stroke();
@@ -284,6 +395,9 @@
             } else {
                 resetStatus();
                 lastPoint = null;
+                // Reset smoothing when hand is lost to prevent "jumping" when hand reappears
+                smoothedX = 0;
+                smoothedY = 0;
             }
         }
 
